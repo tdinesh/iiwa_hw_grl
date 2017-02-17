@@ -3,8 +3,32 @@ import rospy
 from iiwa_msgs.srv import ConfigureSmartServo,ConfigureSmartServoRequest
 from iiwa_msgs.msg import ControlMode, CartesianImpedanceControlMode, CartesianControlModeLimits, JointImpedanceControlMode
 
+import argparse
+
 def main():
   rospy.init_node('iiwa_switch_control')
+
+
+  parser = argparse.ArgumentParser(description='Input ControlMode 0 -> Pos, 1 -> JointImpedance 2->CartesianImpedance')
+
+  parser.add_argument('integer', metavar='N', type=int, nargs='+',
+                     help='ControlMode')
+
+  args = parser.parse_args()
+  mode = args.integer[0]
+
+  if(mode ==0):
+    print 'ControlMode.POSITION_CONTROL'
+    control_mode = ControlMode.POSITION_CONTROL
+  elif(mode ==1):
+    print 'ControlMode.JOINT_IMPEDANCE'
+    control_mode = ControlMode.JOINT_IMPEDANCE
+  elif(mode ==2):
+    print 'ControlMode.CARTESIAN_IMPEDANCE'
+    control_mode = ControlMode.CARTESIAN_IMPEDANCE
+  else:
+    print 'invalid mode'
+    return
 
   #Setting Cartesian Impedance mode
   cartesian_impedance = CartesianImpedanceControlMode()
@@ -88,18 +112,13 @@ def main():
   joint_impedance.joint_damping.a6 = 0.7
   joint_impedance.joint_damping.a7 = 0.7
 
-  control_mode = ControlMode.POSITION_CONTROL
-  control_mode = ControlMode.JOINT_IMPEDANCE
-  #control_mode = ControlMode.CARTESIAN_IMPEDANCE
-
   req = ConfigureSmartServoRequest()
   req.control_mode = control_mode
   req.cartesian_impedance = cartesian_impedance
   req.joint_impedance = joint_impedance
   req.limits = limits
 
-  print 'calling controller switch'
-  print req.control_mode
+  print 'Calling SmartServo ControlMode switch'
 
   try:
     switch_service = rospy.ServiceProxy('/iiwa/configuration/configureSmartServo',ConfigureSmartServo)
@@ -110,5 +129,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-
-
