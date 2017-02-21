@@ -1,5 +1,5 @@
-#ifndef GRL_ROS_BRIDGE_HPP_
-#define GRL_ROS_BRIDGE_HPP_
+#ifndef GRL_IIWA_ROS_BRIDGE_HPP_
+#define GRL_IIWA_ROS_BRIDGE_HPP_
 
 #include <iostream>
 #include <memory>
@@ -169,9 +169,6 @@ namespace grl {
         wrench_pub_ = nh.advertise<geometry_msgs::Wrench>("slave/wrench_r",100);
         mode_sub_ = nh.subscribe<std_msgs::String>("interaction_mode", 1000, &KukaLBRiiwaROSPlugin::mode_callback, this);
 
-        smartservo_config_sub_ = nh.advertiseService<iiwa_msgs::ConfigureSmartServo::Request, iiwa_msgs::ConfigureSmartServo::Response>("/iiwa/configuration/configureSmartServo",
-            boost::bind(&KukaLBRiiwaROSPlugin::smartservo_callback, this, _1, _2));
-
         ROS_INFO("done creating subscribers");
         //jt_sub_ = nh.subscribe<trajectory_msgs::JointTrajectory>("joint_traj_cmd",1000,boost::bind(&KukaLBRiiwaROSPlugin::jt_callback, this, _1));
 
@@ -194,6 +191,9 @@ namespace grl {
             )
           );
         KukaDriverP_->construct();
+
+        smartservo_config_sub_ = nh.advertiseService<iiwa_msgs::ConfigureSmartServo::Request, iiwa_msgs::ConfigureSmartServo::Response>("/iiwa/configuration/configureSmartServo",
+            boost::bind(&KukaLBRiiwaROSPlugin::smartservo_callback, this, _1, _2));
       }
 
       bool setState(State& state) { return true; }

@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="sim" default="false"/>
+  <arg name="start_sim" default="false"/>
+
+  <arg name="start_semi_static" default="false"/>
+  <arg name="start_move_group" default="true"/>
+
+  <arg name="rviz" default="true" />
+
+  <arg name="robot_name" default="iiwa"/>
+  <arg name="model" default="iiwa7"/>
+
+  <arg name="hardware_interface" default="PositionJointInterface"/>
+
+  <include if="$(arg start_sim)" file="$(find iiwa_gazebo)/launch/iiwa_gazebo.launch">
+    <param name="trajectory" value="false"/>
+  </include>
+
+  <group if="$(arg sim)" ns="iiwa">
+    <!-- process high level motion commands -->
+    <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/>
+
+    <!-- listen to joints and send them to simulation -->
+    <node name="iiwa_simulation_publisher" type="iiwa_simulation_controller.py" pkg="costar_bringup" output="screen"/>
+
+    <!-- motion planning -->
+    <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
+      <param name="allow_trajectory_execution" value="true"/>
+      <param name="fake_execution" value="false"/>
+    </include>
+  </group>
+
+  <group unless="$(arg sim)">
+
+    <!-- process high level motion commands
+    <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/> -->
+
+    <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch"/>
+
+    <!-- motion planning -->
+    <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
+      <param name="allow_trajectory_execution" value="true"/>
+      <param name="fake_execution" value="true"/>
+      <arg name="publish_monitored_planning_scene" value="true" />
+      <arg name="hardware_interface" value="$(arg hardware_interface)"/>
+      <arg name="robot_name" value="$(arg robot_name)"/>
+      <arg name="model" value="$(arg model)" />
+    </include>
+
+    <include if="$(arg rviz)" file="$(find iiwa_moveit)/launch/moveit_rviz.launch">
+      <arg name="config" value="true"/>
+    </include>
+
+    <arg name="controllers" value="joint_state_controller $(arg hardware_interface)_trajectory_controller" />
+
+    <!-- Loads joint controller configurations from YAML file to parameter server -->
+    <rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load" />
+
+    <!-- Loads the controllers -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" args="$(arg controllers)" />
+
+    <!-- Converts joint states to TF transforms for rviz, etc -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+          respawn="false" output="screen">
+        <!--<remap from="joint_states" to="/$(arg robot_name)/joint_states" />-->
+    </node>
+
+  </group>
+
+</launch>

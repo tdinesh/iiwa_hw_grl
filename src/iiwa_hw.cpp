@@ -78,7 +78,7 @@ IIWA_HW::IIWA_HW(ros::NodeHandle nh)
 }
 
 IIWA_HW::~IIWA_HW() {
-    KukaDriverP_->set(grl::flatbuffer::ArmState_StopArm);
+   // KukaDriverP_->set(grl::flatbuffer::ArmState_StopArm);
 
     device_driver_workP_.reset();
 
@@ -100,6 +100,79 @@ void IIWA_HW::setFrequency(double frequency) {
     control_frequency_ = frequency;
     loop_rate_ = new ros::Rate(control_frequency_);
 }
+
+/// ROS callback to set current interaction mode; determines whether commands will be send in SERVO, TEACH, etc
+bool IIWA_HW::smartservo_callback(iiwa_msgs::ConfigureSmartServo::Request &req, iiwa_msgs::ConfigureSmartServo::Response  &res){
+    //boost::lock_guard<boost::mutex> lock(jt_mutex);
+
+    // TODO: implement DESIRED_FORCE, SINE_PATTERN
+    switch(req.control_mode){
+      case iiwa_msgs::ControlMode::POSITION_CONTROL:{
+        ROS_INFO("ControlMode POSITION_CONTROL requested");
+        res.success = KukaDriverP_->setPositionControlMode();
+        return res.success;
+        break;
+      }
+      case iiwa_msgs::ControlMode::JOINT_IMPEDANCE:{
+        ROS_INFO("ControlMode JOINT_IMPEDANCE requested");
+
+        iiwa_msgs::JointQuantity js = req.joint_impedance.joint_stiffness;
+        iiwa_msgs::JointQuantity jd = req.joint_impedance.joint_damping;
+
+        std::vector<double>joint_stiffness = {js.a1, js.a2, js.a3, js.a4, js.a5, js.a6, js.a7};
+        std::vector<double>joint_damping = {jd.a1, jd.a2, jd.a3, jd.a4, jd.a5, jd.a6, jd.a7};
+        KukaDriverP_->setJointImpedanceMode(joint_stiffness, joint_damping);
+        res.success = true;
+        return true;
+        break;
+      }
+      case iiwa_msgs::ControlMode::CARTESIAN_IMPEDANCE:{
+        ROS_INFO("ControlMode CARTESIAN_IMPEDANCE requested");
+
+        iiwa_msgs::CartesianQuantity cs = req.cartesian_impedance.cartesian_stiffness;
+        grl::flatbuffer::EulerPose cart_stiffness = grl::flatbuffer::EulerPose(grl::flatbuffer::Vector3d(cs.x, cs.y, cs.z),
+              grl::flatbuffer::EulerRotation(cs.a, cs.b, cs.c, grl::flatbuffer::EulerOrder_xyz));
+
+        iiwa_msgs::CartesianQuantity cd = req.cartesian_impedance.cartesian_damping;
+        grl::flatbuffer::EulerPose cart_damping = grl::flatbuffer::EulerPose(grl::flatbuffer::Vector3d(cd.x, cd.y, cd.z),
+              grl::flatbuffer::EulerRotation(cd.a, cd.b, cd.c, grl::flatbuffer::EulerOrder_xyz));
+
+        double nullspace_stiffness = req.cartesian_impedance.nullspace_stiffness;
+        double nullspace_damping = req.cartesian_impedance.nullspace_damping;
+
+        iiwa_msgs::CartesianQuantity mpd = req.limits.max_path_deviation;
+        grl::flatbuffer::EulerPose cart_max_path_deviation = grl::flatbuffer::EulerPose(grl::flatbuffer::Vector3d(mpd.x, mpd.y, mpd.z),
+              grl::flatbuffer::EulerRotation(mpd.a, mpd.b, mpd.c, grl::flatbuffer::EulerOrder_xyz));
+
+        iiwa_msgs::CartesianQuantity mcf = req.limits.max_control_force;
+        grl::flatbuffer::EulerPose cart_max_ctrl_vel = grl::flatbuffer::EulerPose(grl::flatbuffer::Vector3d(mcf.x, mcf.y, mcf.z),
+              grl::flatbuffer::EulerRotation(mcf.a, mcf.b, mcf.c, grl::flatbuffer::EulerOrder_xyz));
+
+        iiwa_msgs::CartesianQuantity mcv = req.limits.max_cartesian_velocity;
+        grl::flatbuffer::EulerPose cart_max_ctrl_force = grl::flatbuffer::EulerPose(grl::flatbuffer::Vector3d(mcv.x, mcv.y, mcv.z),
+              grl::flatbuffer::EulerRotation(mcv.a, mcv.b, mcv.c, grl::flatbuffer::EulerOrder_xyz));
+
+        bool max_control_force_stop = req.limits.max_control_force_stop;
+
+        bool ret = KukaDriverP_->setCartesianImpedanceMode(cart_stiffness,cart_damping, nullspace_stiffness,nullspace_damping,
+        cart_max_path_deviation, cart_max_ctrl_vel, cart_max_ctrl_force, max_control_force_stop);
+
+        res.success = ret;
+        return ret;
+        break;
+      }
+      default:{
+        res.success = false;
+        res.error = "Unsupported ControlMode";
+        return false;
+        break;
+      }
+
+      res.success = false;
+      return false;
+    }
+}
+
 
 bool IIWA_HW::start() {
 
@@ -189,8 +262,12 @@ bool IIWA_HW::start() {
 
     current_js_.name = device_->joint_names;
 
+    ROS_INFO_STREAM("Setting up GRL Driver " << std::get<RobotModel>(params_) << " " <<  std::get<KukaCommandMode>(params_) << std::endl);
+
     // keep driver threads from exiting immediately after creation, because they have work to do!
     device_driver_workP_.reset(new boost::asio::io_service::work(device_driver_io_service));
+
+    ros::Duration(0.1).sleep();
 
     /// @todo properly support passing of io_service
     KukaDriverP_.reset(
@@ -209,6 +286,9 @@ bool IIWA_HW::start() {
     );
 
     KukaDriverP_->construct();
+
+    smartservo_config_sub_ = nh_.advertiseService<iiwa_msgs::ConfigureSmartServo::Request, iiwa_msgs::ConfigureSmartServo::Response>("/iiwa/configuration/configureSmartServo",
+        boost::bind(&IIWA_HW::smartservo_callback, this, _1, _2));
 
     //KukaDriverP_->set(grl::flatbuffer::ArmState_StartArm);
 

@@ -3,7 +3,9 @@ project(iiwa_hw_grl)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
-find_package(grl REQUIRED)
+#find_package(grl REQUIRED)
+
+find_package(Boost REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   control_toolbox
@@ -27,7 +29,7 @@ catkin_package(
 			control_toolbox
 )
 
-#set(GRL_DIR /opt/grl-4.1.0/)
+set(GRL_DIR ~/ws_gsk/grl)
 set(FRI_SDK_DIR ~/ws_gsk/grl)
 message(ERROR ${grl_INCLUDE_DIRS} ${grl_LIBRARIES})
 
@@ -46,7 +48,11 @@ include_directories(include
   ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/include
 )
 
-link_directories(/usr/local/lib/grl)
+#include_directories(${GRL_DIR})
+include_directories(${GRL_DIR}/include)
+include_directories(${GRL_DIR}/build/include)
+
+link_directories(${GRL_DIR}/build/lib)
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
@@ -71,6 +77,7 @@ target_link_libraries(${PROJECT_NAME}-bin
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${grl_LIBS}
+    ${Boost_LIBRARIES}
 )
 
 add_executable(grl_kuka_ros_driver
@@ -83,4 +90,5 @@ target_link_libraries(grl_kuka_ros_driver
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${grl_LIBS}
+    ${Boost_LIBRARIES}
 )

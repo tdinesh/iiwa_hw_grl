@@ -3,7 +3,6 @@
 
     <!-- LAUNCH INTERFACE -->
     <arg name="hardware_interface" default="PositionJointInterface"/>
-    <arg name="robot_name" default="iiwa"/>
 
     <!-- LAUNCH IMPLEMENTATION -->
     <rosparam command="load" file="$(find iiwa_hw)/config/joint_names.yaml" />

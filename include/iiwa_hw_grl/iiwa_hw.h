@@ -37,6 +37,8 @@
 // iiwa_msgs and ROS inteface includes
 #include <iiwa_msgs/JointPosition.h>
 #include <iiwa_msgs/JointTorque.h>
+#include <iiwa_msgs/ControlMode.h>
+#include <iiwa_msgs/ConfigureSmartServo.h>
 
 // ROS headers
 #include <controller_manager/controller_manager.h>
@@ -259,6 +261,10 @@ private:
     boost::asio::io_service device_driver_io_service;
     std::unique_ptr<boost::asio::io_service::work> device_driver_workP_;
     std::unique_ptr<std::thread> driver_threadP;
+
+    ros::ServiceServer smartservo_config_sub_;
+    bool smartservo_callback(iiwa_msgs::ConfigureSmartServo::Request &req, iiwa_msgs::ConfigureSmartServo::Response  &res);
+
 
 };
 
