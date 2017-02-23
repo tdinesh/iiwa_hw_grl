@@ -4,7 +4,7 @@
   <arg name="model" default="iiwa7"/>
 
   <group ns="$(arg robot_name)">
-    <rosparam command="load" file="$(find iiwa_robotiq_moveit)/config/grl_params.yaml"/>
+    <rosparam command="load" file="$(find iiwa_hw_grl)/config/grl_params.yaml"/>
   </group>
 
   <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch"/>

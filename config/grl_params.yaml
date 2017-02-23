@@ -1,0 +1,11 @@
+RobotName: "Robotiiwa"
+RobotModel: "KUKA_LBR_IIWA_7_R800" #(options are KUKA_LBR_IIWA_14_R820, KUKA_LBR_IIWA_7_R800)
+LocalUDPAddress: "0.0.0.0"
+LocalUDPPort: "30010"
+RemoteUDPAddress: "172.31.1.147"
+LocalHostKukaKoniUDPAddress: "192.170.10.100"
+LocalHostKukaKoniUDPPort: "30200"
+RemoteHostKukaKoniUDPAddress: "192.170.10.2"
+RemoteHostKukaKoniUDPPort: "30200"
+KukaCommandMode: "JAVA" # (options are FRI, JAVA)
+KukaMonitorMode: "FRI" # (options are FRI, JAVA)
