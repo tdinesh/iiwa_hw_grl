@@ -1,10 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="sim" default="false"/>
-  <arg name="start_sim" default="false"/>
-
-  <arg name="start_semi_static" default="false"/>
-  <arg name="start_move_group" default="true"/>
 
   <arg name="rviz" default="true" />
 
@@ -13,33 +8,12 @@
 
   <arg name="hardware_interface" default="PositionJointInterface"/>
 
-  <include if="$(arg start_sim)" file="$(find iiwa_gazebo)/launch/iiwa_gazebo.launch">
-    <param name="trajectory" value="false"/>
-  </include>
-
-  <group if="$(arg sim)" ns="iiwa">
-    <!-- process high level motion commands -->
-    <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/>
-
-    <!-- listen to joints and send them to simulation -->
-    <node name="iiwa_simulation_publisher" type="iiwa_simulation_controller.py" pkg="costar_bringup" output="screen"/>
-
-    <!-- motion planning -->
-    <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
-      <param name="allow_trajectory_execution" value="true"/>
-      <param name="fake_execution" value="false"/>
-    </include>
-  </group>
-
-  <group unless="$(arg sim)">
-
-    <!-- process high level motion commands
-    <include file="$(find costar_robot_manager)/launch/simple_iiwa_driver.launch"/> -->
+  <group ns="$(arg robot_name)">
 
     <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch"/>
 
     <!-- motion planning -->
-    <include if="$(arg start_move_group)" file="$(find iiwa_moveit)/launch/move_group.launch">
+    <include file="$(find iiwa_moveit)/launch/move_group.launch">
       <param name="allow_trajectory_execution" value="true"/>
       <param name="fake_execution" value="true"/>
       <arg name="publish_monitored_planning_scene" value="true" />

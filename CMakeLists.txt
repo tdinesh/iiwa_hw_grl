@@ -29,8 +29,8 @@ catkin_package(
 			control_toolbox
 )
 
-set(GRL_DIR ~/ws_gsk/grl)
-set(FRI_SDK_DIR ~/ws_gsk/grl)
+set(GRL_DIR ~/ws_kuka/grl)
+set(FRI_SDK_DIR ~/ws_kuka/grl)
 message(ERROR ${grl_INCLUDE_DIRS} ${grl_LIBRARIES})
 
 set(grl_LIBS libKukaFRIClient.a libnanopb.a)
