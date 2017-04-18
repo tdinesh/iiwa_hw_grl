@@ -34,6 +34,7 @@
  */
 
 #include <iiwa_hw_grl/iiwa_hw.h>
+#include <geometry_msgs/WrenchStamped.h>
 
 using namespace std;
 
@@ -259,6 +260,7 @@ bool IIWA_HW::start() {
     this->registerInterface(&position_interface_);
 
     js_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states",100);
+    wrench_pub_ = nh_.advertise<geometry_msgs::WrenchStamped>("state/wrench",100);
 
     current_js_.name = device_->joint_names;
 
@@ -383,6 +385,22 @@ bool IIWA_HW::read(ros::Duration period)
         current_js_.header.stamp = ::ros::Time::now();
         current_js_.header.seq += 1;
         js_pub_.publish(current_js_);
+
+        geometry_msgs::WrenchStamped current_wrench;
+        current_wrench.header.stamp = ros::Time::now();
+        current_wrench.header.frame_id = "iiwa_link_ee_wrench";
+        std::vector<double> wrench_vector;
+        KukaDriverP_->getWrench(std::back_inserter(wrench_vector));
+        if (!wrench_vector.empty())
+        {
+            current_wrench.wrench.force.x = wrench_vector[0];
+            current_wrench.wrench.force.y = wrench_vector[1];
+            current_wrench.wrench.force.z = wrench_vector[2];
+            current_wrench.wrench.torque.x = wrench_vector[3];
+            current_wrench.wrench.torque.y = wrench_vector[4];
+            current_wrench.wrench.torque.z = wrench_vector[5];
+        }
+        wrench_pub_.publish(current_wrench);
 
         return 1;
     } else if (delta.toSec() >= 10) {

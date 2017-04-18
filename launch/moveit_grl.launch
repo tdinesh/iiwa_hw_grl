@@ -41,6 +41,9 @@
         <!--<remap from="joint_states" to="/$(arg robot_name)/joint_states" />-->
     </node>
 
+        <!-- Converts joint states to TF transforms for rviz, etc -->
+    <node name="iiwa_tf_pub" pkg="iiwa_robotiq_moveit" type="iiwa_tf_pub.py"/>
+
   </group>
 
 </launch>

@@ -255,6 +255,7 @@ private:
     Params params_;
 
     ros::Publisher js_pub_; // publish true joint states from the KUKA
+    ros::Publisher wrench_pub_;
 
     sensor_msgs::JointState current_js_;
 
