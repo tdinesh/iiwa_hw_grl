@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   std::shared_ptr<KukaLBRiiwaROSPlugin> plugin(std::make_shared<KukaLBRiiwaROSPlugin>());
   plugin->construct();
 
-  ::ros::Rate rate(10);
+  ::ros::Rate rate(1000);
   while (::ros::ok()) {
     ::ros::spinOnce();
 
