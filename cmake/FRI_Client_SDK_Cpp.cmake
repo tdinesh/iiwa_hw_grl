@@ -59,7 +59,7 @@ if(EXISTS "${FRI_Client_SDK_Cpp_zip_FILEPATH}/FRI-Client-SDK_Cpp.zip")
             #install_directory(nanopb-0.2.8)
         endif()
 
-        include_directories(${FRI_DIR}/include ${FRI_SRC_DIR}/base ${FRI_SRC_DIR}/protobuf ${FRI_SRC_DIR}/protobuf_gen)
+        include_directories(${FRI_DIR}/include ${FRI_SRC_DIR}/base ${FRI_SRC_DIR}/protobuf ${FRI_SRC_DIR}/protobuf_gen ${FRI_SRC_DIR}/nanopb-0.2.8)
         #install_directory(FRI_Client_SDK_Cpp/src/protobuf)
         #install_directory(FRI_Client_SDK_Cpp/src/protobuf_gen)
 
@@ -95,8 +95,6 @@ if(EXISTS "${FRI_Client_SDK_Cpp_zip_FILEPATH}/FRI-Client-SDK_Cpp.zip")
 
         target_link_libraries(KukaFRIClient nanopb)
         set(KukaFRIClient_LIBRARY KukaFRIClient)
-        message(ERROR "****" ${KukaFRIClient_LIBRARY})
-
     endif()
     #set(FRI_Client_SDK_Cpp_FOUND TRUE PARENT_SCOPE)
 else()

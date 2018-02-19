@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 find_package(Boost REQUIRED)
 
 set(GRL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/modules/grl)
-set(FRI_SDK_DIR ${CMAKE_SOURCE_DIR}/modules/grl)
+set(FRI_Client_SDK_Cpp_zip_PATH "${GRL_SOURCE_DIR}/data/")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 find_package(FlatBuffers REQUIRED)
@@ -25,8 +25,9 @@ endforeach()
 flatbuffers_generate_c_headers(GRL_FLATBUFFERS ${FULL_RFB})
 add_custom_target(grlflatbuffers DEPENDS ${GRL_FLATBUFFERS_OUTPUTS})
 
-set(FRI_Client_SDK_Cpp_zip_PATH "${GRL_SOURCE_DIR}/data/")
 include(${CMAKE_SOURCE_DIR}/cmake/FRI_Client_SDK_Cpp.cmake)
+set(FRI_LIBS ${KukaFRIClient_LIBRARY} ${Nanopb_LIBRARIES})
+
 
 find_package(catkin REQUIRED COMPONENTS
   control_toolbox
@@ -50,24 +51,13 @@ catkin_package(
 			control_toolbox
 )
 
-set(grl_LIBS ${KukaFRIClient_LIBRARY} ${Nanopb_LIBRARIES})
-
 ## Specify additional locations of header files
 include_directories(include
   ${Boost_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
-  ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/src/base
-  ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/src/protobuf_gen
-  ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/src/nanopb-0.2.8
-  ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/src/protobuf
-  ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/include
 )
 
-#include_directories(${GRL_SOURCE_DIR})
 include_directories(${GRL_SOURCE_DIR}/include)
-include_directories(${GRL_SOURCE_DIR}/build/include)
-
-link_directories(${GRL_SOURCE_DIR}/build/lib)
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
@@ -91,7 +81,7 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}-bin
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
-    ${grl_LIBS}
+    ${FRI_LIBS}
     ${Boost_LIBRARIES}
 )
 
@@ -104,6 +94,6 @@ add_dependencies(grl_kuka_ros_driver
 target_link_libraries(grl_kuka_ros_driver
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
-    ${grl_LIBS}
+    ${FRI_LIBS}
     ${Boost_LIBRARIES}
 )
