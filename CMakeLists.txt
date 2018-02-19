@@ -3,9 +3,30 @@ project(iiwa_hw_grl)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
-#find_package(grl REQUIRED)
-
 find_package(Boost REQUIRED)
+
+set(GRL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/modules/grl)
+set(FRI_SDK_DIR ${CMAKE_SOURCE_DIR}/modules/grl)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+
+find_package(FlatBuffers REQUIRED)
+
+# list flatbuffer headers
+set(RFB ArmControlState.fbs Geometry.fbs JointState.fbs KUKAiiwa.fbs LinkObject.fbs Euler.fbs Time.fbs VrepControlPoint.fbs VrepPath.fbs)
+
+#generate full paths for flatbuffer headers
+set(FULL_RFB)
+foreach(FILE ${RFB})
+  set(FULL_PATH "${GRL_SOURCE_DIR}/include/grl/flatbuffer/${FILE}")
+  list(APPEND FULL_RFB ${FULL_PATH})
+endforeach()
+
+# Generate flatbuffer message C++ headers
+flatbuffers_generate_c_headers(GRL_FLATBUFFERS ${FULL_RFB})
+add_custom_target(grlflatbuffers DEPENDS ${GRL_FLATBUFFERS_OUTPUTS})
+
+set(FRI_Client_SDK_Cpp_zip_PATH "${GRL_SOURCE_DIR}/data/")
+include(${CMAKE_SOURCE_DIR}/cmake/FRI_Client_SDK_Cpp.cmake)
 
 find_package(catkin REQUIRED COMPONENTS
   control_toolbox
@@ -29,18 +50,12 @@ catkin_package(
 			control_toolbox
 )
 
-set(GRL_DIR ~/ws_kuka/grl)
-set(FRI_SDK_DIR ~/ws_kuka/grl)
-message(ERROR ${grl_INCLUDE_DIRS} ${grl_LIBRARIES})
-
-set(grl_LIBS libKukaFRIClient.a libnanopb.a)
+set(grl_LIBS ${KukaFRIClient_LIBRARY} ${Nanopb_LIBRARIES})
 
 ## Specify additional locations of header files
 include_directories(include
   ${Boost_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
-  ${grl_INCLUDE_DIRS}
-  #${GRL_DIR}/include
   ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/src/base
   ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/src/protobuf_gen
   ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/src/nanopb-0.2.8
@@ -48,11 +63,11 @@ include_directories(include
   ${FRI_SDK_DIR}/data/FRI-Client-SDK_Cpp/include
 )
 
-#include_directories(${GRL_DIR})
-include_directories(${GRL_DIR}/include)
-include_directories(${GRL_DIR}/build/include)
+#include_directories(${GRL_SOURCE_DIR})
+include_directories(${GRL_SOURCE_DIR}/include)
+include_directories(${GRL_SOURCE_DIR}/build/include)
 
-link_directories(${GRL_DIR}/build/lib)
+link_directories(${GRL_SOURCE_DIR}/build/lib)
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
@@ -66,11 +81,11 @@ add_executable(${PROJECT_NAME}-bin
 
 ## Add dependence to the iiwa_msg module for the executable
 add_dependencies(${PROJECT_NAME}-bin
-				iiwa_msgs_generate_messages_cpp)
+				iiwa_msgs_generate_messages_cpp grlflatbuffers)
 
 ## Add dependence to the iiwa_msg module for the library
 add_dependencies(${PROJECT_NAME}
-				iiwa_msgs_generate_messages_cpp)
+				iiwa_msgs_generate_messages_cpp grlflatbuffers)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}-bin
@@ -84,7 +99,7 @@ add_executable(grl_kuka_ros_driver
     src/grl_kuka_ros_driver.cpp
 )
 add_dependencies(grl_kuka_ros_driver
-        iiwa_msgs_generate_messages_cpp)
+        iiwa_msgs_generate_messages_cpp grlflatbuffers)
 
 target_link_libraries(grl_kuka_ros_driver
     ${PROJECT_NAME}
